@@ -346,7 +346,7 @@ fn emit_client_hello_for_retry(
             session_id,
             cipher_suites,
             compression_methods: vec![Compression::Null],
-            extensions: exts,
+            extensions: Some(exts),
         }),
     };
 
@@ -531,7 +531,7 @@ impl State<ClientConnectionData> for ExpectServerHello {
         let allowed_unsolicited = [ExtensionType::RenegotiationInfo];
         if self
             .hello
-            .server_sent_unsolicited_extensions(&server_hello.extensions, &allowed_unsolicited)
+            .server_sent_unsolicited_extensions(server_hello.get_extensions(), &allowed_unsolicited)
         {
             cx.common
                 .send_fatal_alert(AlertDescription::UnsupportedExtension);

@@ -3267,7 +3267,7 @@ mod test_quic {
                     session_id: SessionID::random().unwrap(),
                     cipher_suites: vec![CipherSuite::TLS13_AES_128_GCM_SHA256],
                     compression_methods: vec![Compression::Null],
-                    extensions: vec![
+                    extensions: Some(vec![
                         ClientExtension::SupportedVersions(vec![ProtocolVersion::TLSv1_3]),
                         ClientExtension::NamedGroups(vec![NamedGroup::X25519]),
                         ClientExtension::SignatureAlgorithms(vec![SignatureScheme::ED25519]),
@@ -3275,7 +3275,7 @@ mod test_quic {
                             group: NamedGroup::X25519,
                             payload: PayloadU16::new(kx.as_ref().to_vec()),
                         }]),
-                    ],
+                    ]),
                 }),
             }),
         };
@@ -3335,14 +3335,14 @@ mod test_quic {
                     session_id: SessionID::random().unwrap(),
                     cipher_suites: vec![CipherSuite::TLS13_AES_128_GCM_SHA256],
                     compression_methods: vec![Compression::Null],
-                    extensions: vec![
+                    extensions: Some(vec![
                         ClientExtension::NamedGroups(vec![NamedGroup::X25519]),
                         ClientExtension::SignatureAlgorithms(vec![SignatureScheme::ED25519]),
                         ClientExtension::KeyShare(vec![KeyShareEntry {
                             group: NamedGroup::X25519,
                             payload: PayloadU16::new(kx.as_ref().to_vec()),
                         }]),
-                    ],
+                    ]),
                 }),
             }),
         };
@@ -3845,7 +3845,12 @@ fn test_server_rejects_duplicate_sni_names() {
     fn duplicate_sni_payload(msg: &mut Message) -> Altered {
         if let MessagePayload::Handshake(hs) = &mut msg.payload {
             if let HandshakePayload::ClientHello(ch) = &mut hs.payload {
-                for mut ext in ch.extensions.iter_mut() {
+                for mut ext in ch
+                    .extensions
+                    .as_mut()
+                    .unwrap()
+                    .iter_mut()
+                {
                     if let ClientExtension::ServerName(snr) = &mut ext {
                         snr.push(snr[0].clone());
                     }
@@ -3871,7 +3876,12 @@ fn test_server_rejects_empty_sni_extension() {
     fn empty_sni_payload(msg: &mut Message) -> Altered {
         if let MessagePayload::Handshake(hs) = &mut msg.payload {
             if let HandshakePayload::ClientHello(ch) = &mut hs.payload {
-                for mut ext in ch.extensions.iter_mut() {
+                for mut ext in ch
+                    .extensions
+                    .as_mut()
+                    .unwrap()
+                    .iter_mut()
+                {
                     if let ClientExtension::ServerName(snr) = &mut ext {
                         snr.clear();
                     }
@@ -3897,7 +3907,12 @@ fn test_server_rejects_clients_without_any_kx_group_overlap() {
     fn different_kx_group(msg: &mut Message) -> Altered {
         if let MessagePayload::Handshake(hs) = &mut msg.payload {
             if let HandshakePayload::ClientHello(ch) = &mut hs.payload {
-                for mut ext in ch.extensions.iter_mut() {
+                for mut ext in ch
+                    .extensions
+                    .as_mut()
+                    .unwrap()
+                    .iter_mut()
+                {
                     if let ClientExtension::NamedGroups(ngs) = &mut ext {
                         ngs.clear();
                     }

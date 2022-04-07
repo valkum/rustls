@@ -186,7 +186,7 @@ fn validate_server_hello(
     common: &mut CommonState,
     server_hello: &ServerHelloPayload,
 ) -> Result<(), Error> {
-    for ext in &server_hello.extensions {
+    for ext in server_hello.get_extensions() {
         if !ALLOWED_PLAINTEXT_EXTS.contains(&ext.get_type()) {
             common.send_fatal_alert(AlertDescription::UnsupportedExtension);
             return Err(Error::PeerMisbehavedError(

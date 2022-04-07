@@ -340,7 +340,7 @@ mod client_hello {
                     session_id,
                     cipher_suite: suite.common.suite,
                     compression_method: Compression::Null,
-                    extensions: ep.exts,
+                    extensions: Some(ep.exts),
                 }),
             }),
         };

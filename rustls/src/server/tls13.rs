@@ -481,7 +481,7 @@ mod client_hello {
                     session_id: *session_id,
                     cipher_suite: suite.common.suite,
                     compression_method: Compression::Null,
-                    extensions,
+                    extensions: Some(extensions),
                 }),
             }),
         };

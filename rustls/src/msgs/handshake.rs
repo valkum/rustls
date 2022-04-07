@@ -851,7 +851,7 @@ pub struct ClientHelloPayload {
     pub session_id: SessionID,
     pub cipher_suites: Vec<CipherSuite>,
     pub compression_methods: Vec<Compression>,
-    pub extensions: Vec<ClientExtension>,
+    pub extensions: Option<Vec<ClientExtension>>,
 }
 
 impl Codec for ClientHelloPayload {
@@ -862,26 +862,26 @@ impl Codec for ClientHelloPayload {
         codec::encode_vec_u16(bytes, &self.cipher_suites);
         codec::encode_vec_u8(bytes, &self.compression_methods);
 
-        if !self.extensions.is_empty() {
-            codec::encode_vec_u16(bytes, &self.extensions);
+        if let Some(ref exts) = self.extensions {
+            codec::encode_vec_u16(bytes, exts);
         }
     }
 
     fn read(r: &mut Reader) -> Option<Self> {
-        let mut ret = Self {
+        let ret = Self {
             client_version: ProtocolVersion::read(r)?,
             random: Random::read(r)?,
             session_id: SessionID::read(r)?,
             cipher_suites: codec::read_vec_u16::<CipherSuite>(r)?,
             compression_methods: codec::read_vec_u8::<Compression>(r)?,
-            extensions: Vec::new(),
+            extensions: if r.any_left() {
+                Some(codec::read_vec_u16::<ClientExtension>(r)?)
+            } else {
+                None
+            },
         };
 
         if r.any_left() {
-            ret.extensions = codec::read_vec_u16::<ClientExtension>(r)?;
-        }
-
-        if r.any_left() || ret.extensions.is_empty() {
             None
         } else {
             Some(ret)
@@ -890,12 +890,20 @@ impl Codec for ClientHelloPayload {
 }
 
 impl ClientHelloPayload {
+    pub fn get_extensions(&self) -> &[ClientExtension] {
+        if let Some(ref exts) = self.extensions {
+            exts
+        } else {
+            &[]
+        }
+    }
+
     /// Returns true if there is more than one extension of a given
     /// type.
     pub fn has_duplicate_extension(&self) -> bool {
         let mut seen = collections::HashSet::new();
 
-        for ext in &self.extensions {
+        for ext in self.get_extensions() {
             let typ = ext.get_type().get_u16();
 
             if seen.contains(&typ) {
@@ -908,7 +916,7 @@ impl ClientHelloPayload {
     }
 
     pub fn find_extension(&self, ext: ExtensionType) -> Option<&ClientExtension> {
-        self.extensions
+        self.get_extensions()
             .iter()
             .find(|x| x.get_type() == ext)
     }
@@ -1009,7 +1017,7 @@ impl ClientHelloPayload {
     }
 
     pub fn check_psk_ext_is_last(&self) -> bool {
-        self.extensions
+        self.get_extensions()
             .last()
             .map_or(false, |ext| ext.get_type() == ExtensionType::PreSharedKey)
     }
@@ -1029,9 +1037,11 @@ impl ClientHelloPayload {
     }
 
     pub fn set_psk_binder(&mut self, binder: impl Into<Vec<u8>>) {
-        let last_extension = self.extensions.last_mut();
-        if let Some(ClientExtension::PresharedKey(ref mut offer)) = last_extension {
-            offer.binders[0] = PresharedKeyBinder::new(binder.into());
+        if let Some(ref mut extensions) = &mut self.extensions {
+            let last_extension = extensions.last_mut();
+            if let Some(ClientExtension::PresharedKey(ref mut offer)) = last_extension {
+                offer.binders[0] = PresharedKeyBinder::new(binder.into());
+            }
         }
     }
 
@@ -1203,7 +1213,7 @@ pub struct ServerHelloPayload {
     pub session_id: SessionID,
     pub cipher_suite: CipherSuite,
     pub compression_method: Compression,
-    pub extensions: Vec<ServerExtension>,
+    pub extensions: Option<Vec<ServerExtension>>,
 }
 
 impl Codec for ServerHelloPayload {
@@ -1215,8 +1225,8 @@ impl Codec for ServerHelloPayload {
         self.cipher_suite.encode(bytes);
         self.compression_method.encode(bytes);
 
-        if !self.extensions.is_empty() {
-            codec::encode_vec_u16(bytes, &self.extensions);
+        if let Some(ref exts) = self.extensions {
+            codec::encode_vec_u16(bytes, exts);
         }
     }
 
@@ -1232,9 +1242,9 @@ impl Codec for ServerHelloPayload {
          *  the ServerHello."
          */
         let extensions = if r.any_left() {
-            codec::read_vec_u16::<ServerExtension>(r)?
+            Some(codec::read_vec_u16::<ServerExtension>(r)?)
         } else {
-            vec![]
+            None
         };
 
         let ret = Self {
@@ -1256,7 +1266,11 @@ impl Codec for ServerHelloPayload {
 
 impl HasServerExtensions for ServerHelloPayload {
     fn get_extensions(&self) -> &[ServerExtension] {
-        &self.extensions
+        if let Some(ref exts) = self.extensions {
+            exts
+        } else {
+            &[]
+        }
     }
 }
 
@@ -1733,6 +1747,8 @@ impl ServerKeyExchangePayload {
 declare_u16_vec!(EncryptedExtensions, ServerExtension);
 
 pub trait HasServerExtensions {
+    /// Returns the extensions as a slice, collapsing absent extensions
+    /// to an empty slice.
     fn get_extensions(&self) -> &[ServerExtension];
 
     /// Returns true if there is more than one extension of a given
@@ -2322,7 +2338,7 @@ impl HandshakeMessagePayload {
         let mut ret = self.get_encoding();
 
         let binder_len = match self.payload {
-            HandshakePayload::ClientHello(ref ch) => match ch.extensions.last() {
+            HandshakePayload::ClientHello(ref ch) => match ch.get_extensions().last() {
                 Some(ClientExtension::PresharedKey(ref offer)) => {
                     let mut binders_encoding = Vec::new();
                     offer
