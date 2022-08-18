@@ -12,7 +12,8 @@ pub trait MessageDecrypter: Send + Sync {
 }
 
 /// Objects with this trait can encrypt TLS messages.
-pub(crate) trait MessageEncrypter: Send + Sync {
+pub trait MessageEncrypter: Send + Sync {
+    /// Perform the encryption over the concerned plaintext.
     fn encrypt(&self, m: BorrowedPlainMessage, seq: u64) -> Result<OpaqueMessage, Error>;
 }
 

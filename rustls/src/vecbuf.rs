@@ -7,7 +7,7 @@ use std::io::Read;
 /// of byte vectors.  This avoids extra copies when
 /// appending a new byte vector, at the expense of
 /// more complexity when reading out.
-pub(crate) struct ChunkVecBuffer {
+pub struct ChunkVecBuffer {
     chunks: VecDeque<Vec<u8>>,
     limit: Option<usize>,
 }

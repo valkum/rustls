@@ -359,7 +359,9 @@ pub(crate) enum Protocol {
 }
 
 #[derive(Debug)]
-pub(crate) struct ConnectionRandoms {
+
+/// Conn
+pub struct ConnectionRandoms {
     pub(crate) client: [u8; 32],
     pub(crate) server: [u8; 32],
 }
@@ -1338,6 +1340,7 @@ impl CommonState {
     }
 }
 
+
 pub(crate) trait State<Data>: Send + Sync {
     fn handle(
         self: Box<Self>,
@@ -1390,9 +1393,12 @@ impl Quic {
     }
 }
 
+/// Side enum
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) enum Side {
+pub enum Side {
+    /// Client-Side
     Client,
+    /// Server-Side
     Server,
 }
 

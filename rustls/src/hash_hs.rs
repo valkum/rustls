@@ -9,7 +9,7 @@ use std::mem;
 /// Before we know the hash algorithm to use to verify the handshake, we just buffer the messages.
 /// During the handshake, we may restart the transcript due to a HelloRetryRequest, reverting
 /// from the `HandshakeHash` to a `HandshakeHashBuffer` again.
-pub(crate) struct HandshakeHashBuffer {
+pub struct HandshakeHashBuffer {
     buffer: Vec<u8>,
     client_auth_enabled: bool,
 }
@@ -75,7 +75,7 @@ impl HandshakeHashBuffer {
 ///
 /// For client auth, we also need to buffer all the messages.
 /// This is disabled in cases where client auth is not possible.
-pub(crate) struct HandshakeHash {
+pub struct HandshakeHash {
     /// None before we know what hash function we're using
     ctx: digest::Context,
 

@@ -209,7 +209,7 @@ impl fmt::Debug for Tls12CipherSuite {
 }
 
 /// TLS1.2 per-connection keying material
-pub(crate) struct ConnectionSecrets {
+pub struct ConnectionSecrets {
     pub(crate) randoms: ConnectionRandoms,
     suite: &'static Tls12CipherSuite,
     pub(crate) master_secret: [u8; 48],
@@ -440,7 +440,8 @@ fn decode_ecdh_params_<T: Codec>(kx_params: &[u8]) -> Option<T> {
     }
 }
 
-pub(crate) const DOWNGRADE_SENTINEL: [u8; 8] = [0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01];
+/// Downgrade Sentinal, TODO
+pub const DOWNGRADE_SENTINEL: [u8; 8] = [0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01];
 
 #[cfg(test)]
 mod tests {

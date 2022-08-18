@@ -353,8 +353,44 @@ pub mod internal {
     }
     /// Low-level TLS message decryption functions.
     pub mod cipher {
-        pub use crate::cipher::MessageDecrypter;
+        pub use crate::cipher::{MessageEncrypter, MessageDecrypter};
     }
+    /// Connection
+    pub mod conn{
+        pub use crate::conn::Side;
+        pub use crate::conn::ConnectionRandoms;
+    }
+    /// Record-Layer
+    pub mod record_layer {
+        pub use crate::record_layer::RecordLayer;
+    }
+    /// Custom ByteBuffer
+    pub mod vecbuf {
+       pub use crate::vecbuf::ChunkVecBuffer;
+    }
+    pub use crate::bs_debug::BsDebug;
+
+    /// Handshake Stuff
+    pub mod hash_hs {
+        pub use crate::hash_hs::{HandshakeHash, HandshakeHashBuffer};
+    }
+    #[cfg(feature = "tls12")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "quic")))]
+    /// TLS1.2 stuff
+    pub mod tls12 {
+        pub use crate::tls12::DOWNGRADE_SENTINEL;
+        pub use crate::tls12::ConnectionSecrets;
+    }
+    /// Check stuff
+    pub mod check {
+        pub use crate::check::inappropriate_handshake_message;
+    }
+    /// KeyExchange Stuff
+    pub mod kx {
+        pub use crate::kx::KeyExchange;
+    }
+
+
 }
 
 // The public interface is:
